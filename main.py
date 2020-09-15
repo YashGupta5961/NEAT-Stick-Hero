@@ -21,18 +21,18 @@ HERO_S = [  pygame.image.load(os.path.join("Images","standing","1.png")),
 
 STICK_IMG = pygame.image.load(os.path.join("Images","stick.png"))
 
+        
+
 BG_IMG = pygame.image.load(os.path.join("Images","bg.png"))
 
 BASE_IMG = pygame.image.load(os.path.join("Images","base.png"))
 
 
 class Hero:
-     
-    #  ROT_VEL = 20
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.image
+        self.image = HERO_W[0]
         self.imgCount = 0
     ANIMATION_TIME = 20
     def stand_draw(self, win):
@@ -80,43 +80,52 @@ class Hero:
 
 
 class Stick:
+    MAX_ROTATION = 90
+    ROT_VEL = 20
     def __init__(self, x, y):
         self.length = 0
         self.x = x
         self.y = y
-        self.imgCount = 0
+        self.tilt = 0
+        self.image = None
     
     def grow(self):
+        self.image = STICK_IMG
         self.length += 1
-        self.x -= 1
+        self.y -= 1
+        self.image = pygame.transform.scale(self.image, (4, self.length))
 
     def draw(self, win):
-        self.image = pygame.transform.scale(self.image, (4, self.length))
-        win.blit(self.image, (self.x, self.y))
+        if self.image != None:
+            win.blit(self.image, (self.x, self.y))
 
 
-def drawWindow(win, hero, walk):
+def drawWindow(win, hero, walk, stick):
     win.blit(BG_IMG, (0,0))
     hero.walk_draw(win) if walk else hero.stand_draw(win)
+    stick.draw(win)
     pygame.display.update()
 
 def main():
     hero = Hero(60, 470)
+    stick = Stick(hero.x + 35, hero.y + 30)
     win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
     run = True
     walk = False
+    growing = False
     while(run):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    if(walk):
-                        walk = False
+                    if(growing):
+                        growing = False
                     else:
-                        walk = True
-
-        drawWindow(win, hero, walk)
+                        growing = True
+        if growing:
+            stick.grow()            
+        drawWindow(win, hero, walk, stick)
     pygame.quit()
     quit()
 
