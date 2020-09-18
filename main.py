@@ -3,6 +3,7 @@ import neat
 import time
 import os
 import random
+import math
 
 WIN_WIDTH = 450
 WIN_HEIGHT = 800
@@ -80,24 +81,30 @@ class Hero:
 
 
 class Stick:
-    MAX_ROTATION = 90
-    ROT_VEL = 20
     def __init__(self, x, y):
         self.length = 0
         self.x = x
         self.y = y
-        self.tilt = 0
-        self.image = None
+        self.xEnd = x
+        self.yEnd = y
+        self.tilt = math.pi / 2
     
     def grow(self):
-        self.image = STICK_IMG
         self.length += 1
-        self.y -= 1
-        self.image = pygame.transform.scale(self.image, (4, self.length))
+        self.yEnd = self.y - self.length
+
+    def rotate(self):
+        if self.tilt >= math.pi:
+            return False
+        self.tilt += math.pi / 720
+        self.xEnd = self.x - self.length*(math.cos(self.tilt)) 
+        self.yEnd = self.y - self.length*(math.sin(self.tilt)) 
+        return True
+        
 
     def draw(self, win):
-        if self.image != None:
-            win.blit(self.image, (self.x, self.y))
+        if self.length != 0:
+            pygame.draw.line(win, (0,0,0), (self.x, self.y), (self.xEnd, self.yEnd), 4)
 
 
 def drawWindow(win, hero, walk, stick):
@@ -113,6 +120,7 @@ def main():
     run = True
     walk = False
     growing = False
+    rotating = False
     while(run):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -121,10 +129,16 @@ def main():
                 if event.key == pygame.K_SPACE:
                     if(growing):
                         growing = False
+                        rotating = True
                     else:
                         growing = True
+
         if growing:
-            stick.grow()            
+            stick.grow()
+        
+        if rotating:
+            rotating = stick.rotate()         
+
         drawWindow(win, hero, walk, stick)
     pygame.quit()
     quit()
