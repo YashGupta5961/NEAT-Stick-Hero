@@ -7,6 +7,8 @@ import math
 
 WIN_WIDTH = 450
 WIN_HEIGHT = 800
+HERO_X = 60
+HERO_Y = 470
 
 HERO_W = [  pygame.image.load(os.path.join("Images","walking","1.png")),
             pygame.image.load(os.path.join("Images","walking","2.png")),
@@ -20,13 +22,11 @@ HERO_S = [  pygame.image.load(os.path.join("Images","standing","1.png")),
             pygame.image.load(os.path.join("Images","standing","5.png")),
             pygame.image.load(os.path.join("Images","standing","6.png")), ]
 
-STICK_IMG = pygame.image.load(os.path.join("Images","stick.png"))
-
-        
+       
 
 BG_IMG = pygame.image.load(os.path.join("Images","bg.png"))
 
-BASE_IMG = pygame.image.load(os.path.join("Images","base.png"))
+
 
 
 class Hero:
@@ -78,15 +78,18 @@ class Hero:
         win.blit(self.image, (self.x, self.y))
 
         self.x += 1
+    
+    def pushBack(self):
+        self.x -=1
 
 
 class Stick:
-    def __init__(self, x, y):
+    def __init__(self, hero):
         self.length = 0
-        self.x = x
-        self.y = y
-        self.xEnd = x
-        self.yEnd = y
+        self.x = hero.x + 35
+        self.y = hero.y + 30
+        self.xEnd = self.x
+        self.yEnd = self.y
         self.tilt = math.pi / 2
     
     def grow(self):
@@ -106,16 +109,37 @@ class Stick:
         if self.length != 0:
             pygame.draw.line(win, (0,0,0), (self.x, self.y), (self.xEnd, self.yEnd), 4)
 
+class Base:
+    def __init__(self):
+        self.width = random.randint(60, 120)
+        self.x = random.randint(HERO_X + 45, 320)
+        if (self.x + self.width) > 440:
+            self.x = 440 - self.width
+        self.y = 500
+        self.height = 300 
+    
+    def pushBack(self):
+        self.x -=1
+        
+    
+    def draw(self, win):
+        pygame.draw.rect(win, (0,0,0), (self.x, self.y, self.width, self.height))
+        
 
-def drawWindow(win, hero, walk, stick):
+
+
+
+def drawWindow(win, hero, walk, stick, base):
     win.blit(BG_IMG, (0,0))
     hero.walk_draw(win) if walk else hero.stand_draw(win)
     stick.draw(win)
+    base.draw(win)
     pygame.display.update()
 
 def main():
-    hero = Hero(60, 470)
-    stick = Stick(hero.x + 35, hero.y + 30)
+    hero = Hero(HERO_X, HERO_Y)
+    stick = Stick(hero)
+    base = Base()
     win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
     run = True
     walk = False
@@ -137,9 +161,19 @@ def main():
             stick.grow()
         
         if rotating:
-            rotating = stick.rotate()         
+            rotating = stick.rotate()  
 
-        drawWindow(win, hero, walk, stick)
+        if stick.tilt >= math.pi:
+            # del stick
+            # growing = False
+            # rotating = False
+            # stick = Stick(hero)   
+            walk = True
+
+        if hero.x > stick.xEnd:
+            walk = False   
+
+        drawWindow(win, hero, walk, stick, base)
     pygame.quit()
     quit()
 
