@@ -99,7 +99,7 @@ class Stick:
     def rotate(self):
         if self.tilt >= math.pi:
             return False
-        self.tilt += math.pi / 720
+        self.tilt += math.pi / 540
         self.xEnd = self.x - self.length*(math.cos(self.tilt)) 
         self.yEnd = self.y - self.length*(math.sin(self.tilt)) 
         return True
@@ -110,36 +110,49 @@ class Stick:
             pygame.draw.line(win, (0,0,0), (self.x, self.y), (self.xEnd, self.yEnd), 4)
 
 class Base:
-    def __init__(self):
+    def __init__(self, x_ = None, w_ = None):
         self.width = random.randint(60, 120)
         self.x = random.randint(HERO_X + 45, 320)
+        self.redX = int(self.x + (self.width / 2))
+
+        if x_ != None:
+            self.x = x_
+            self.width = w_
+            self.redX = -10
+
         if (self.x + self.width) > 440:
             self.x = 440 - self.width
         self.y = 500
         self.height = 300 
-    
+        
+
     def pushBack(self):
-        self.x -=1
+        self.x -= 1
         
     
     def draw(self, win):
         pygame.draw.rect(win, (0,0,0), (self.x, self.y, self.width, self.height))
-        
+        pygame.draw.rect(win, (255,0,0), (self.redX, self.y, 4, 4))
 
 
 
 
-def drawWindow(win, hero, walk, stick, base):
+def drawWindow(win, hero, walk, stick, bases):
     win.blit(BG_IMG, (0,0))
     hero.walk_draw(win) if walk else hero.stand_draw(win)
     stick.draw(win)
-    base.draw(win)
+    for base in bases:
+        base.draw(win)
     pygame.display.update()
 
 def main():
     hero = Hero(HERO_X, HERO_Y)
     stick = Stick(hero)
+    baselist = list()
+    base1 = Base(20, 75)
     base = Base()
+    baselist.append(base)
+    baselist.append(base1)
     win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
     run = True
     walk = False
@@ -164,16 +177,12 @@ def main():
             rotating = stick.rotate()  
 
         if stick.tilt >= math.pi:
-            # del stick
-            # growing = False
-            # rotating = False
-            # stick = Stick(hero)   
             walk = True
 
-        if hero.x > stick.xEnd:
+        if hero.x + 30 > base.x + base.width:
             walk = False   
 
-        drawWindow(win, hero, walk, stick, base)
+        drawWindow(win, hero, walk, stick, baselist)
     pygame.quit()
     quit()
 
