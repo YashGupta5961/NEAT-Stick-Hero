@@ -80,7 +80,10 @@ class Hero:
         self.x += 1
     
     def pushBack(self):
+        if self.x <= 60:
+            return False
         self.x -=1
+        return True
 
 
 class Stick:
@@ -104,6 +107,9 @@ class Stick:
         self.yEnd = self.y - self.length*(math.sin(self.tilt)) 
         return True
         
+    def pushBack(self):
+        self.x -= 1
+        self.xEnd -= 1
 
     def draw(self, win):
         if self.length != 0:
@@ -128,7 +134,7 @@ class Base:
 
     def pushBack(self):
         self.x -= 1
-        
+        self.redX -= 1
     
     def draw(self, win):
         pygame.draw.rect(win, (0,0,0), (self.x, self.y, self.width, self.height))
@@ -151,13 +157,15 @@ def main():
     baselist = list()
     base1 = Base(20, 75)
     base = Base()
-    baselist.append(base)
     baselist.append(base1)
+    baselist.append(base)
+    rem = list()
     win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
     run = True
     walk = False
     growing = False
     rotating = False
+    pushback = False
     while(run):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -180,7 +188,22 @@ def main():
             walk = True
 
         if hero.x + 30 > base.x + base.width:
-            walk = False   
+            walk = False
+            pushback = True #shitty codition: always true as base is also pushed back
+            
+        if pushback:
+            for base in baselist:
+                base.pushBack()
+            stick.pushBack()      
+            pushback = hero.pushBack()
+
+        for base in baselist:
+            if base.x + base.width < 0:
+                rem.append(base)
+
+        
+        for x in rem:
+            del x
 
         drawWindow(win, hero, walk, stick, baselist)
     pygame.quit()
