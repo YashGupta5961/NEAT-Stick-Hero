@@ -80,10 +80,7 @@ class Hero:
         self.x += 1
     
     def pushBack(self):
-        if self.x <= 60:
-            return False
         self.x -=1
-        return True
 
 
 class Stick:
@@ -116,21 +113,27 @@ class Stick:
             pygame.draw.line(win, (0,0,0), (self.x, self.y), (self.xEnd, self.yEnd), 4)
 
 class Base:
-    def __init__(self, x_ = None, w_ = None):
-        self.width = random.randint(60, 120)
-        self.x = random.randint(HERO_X + 45, 320)
-        self.redX = int(self.x + (self.width / 2))
+    def __init__(self, x_ = None, w_ = None, base = None):
+        # self.width = random.randint(60, 120)
+        # self.x = random.randint(HERO_X + 45, 320)
+        # self.redX = int(self.x + (self.width / 2))
+
+        # if (self.x + self.width) > 440:
+        #     self.x = 440 - self.width
 
         if x_ != None:
             self.x = x_
             self.width = w_
-            self.redX = -10
 
-        if (self.x + self.width) > 440:
-            self.x = 440 - self.width
+        else:
+            self.width = random.randint(60, 120)
+            end = random.randint(self.width + 5, 380)            
+            self.x = base.x + base.width + end - self.width
+        
+        self.redX = int(self.x + (self.width / 2))
         self.y = 500
         self.height = 300 
-        
+
 
     def pushBack(self):
         self.x -= 1
@@ -152,14 +155,15 @@ def drawWindow(win, hero, walk, stick, bases):
     pygame.display.update()
 
 def main():
+    score = 0
     hero = Hero(HERO_X, HERO_Y)
     stick = Stick(hero)
     baselist = list()
-    base1 = Base(20, 75)
-    base = Base()
-    baselist.append(base1)
-    baselist.append(base)
+    baselist.append(Base(0, 95))
+    baselist.append(Base(base=baselist[0]))
+    baselist.append(Base(base=baselist[1]))
     rem = list()
+    add = list()
     win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
     run = True
     walk = False
@@ -167,20 +171,21 @@ def main():
     rotating = False
     pushback = False
     while(run):
+        addbase = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    if growing:
-                        growing = False
-                        rotating = True
-                    else:
-                        growing = True
+                    if not rotating and stick.tilt <= math.pi:
+                        if growing:
+                            growing = False
+                            rotating = True
+                        else:
+                            growing = True
 
         if growing:
             stick.grow()
-            
 
         if rotating:
             rotating = stick.rotate()  
@@ -188,31 +193,46 @@ def main():
         if stick.tilt >= math.pi:
             walk = True
 
-        if stick.xEnd < base.x:
+        if stick.xEnd < baselist[1].x:
             if hero.x + 30 >= stick.xEnd:
                 walk = False
         else:
-            if hero.x + 30 >= max([stick.xEnd, base.x + base.width]):
+            if hero.x + 30 >= max([stick.xEnd, baselist[1].x + baselist[1].width]):
                 walk = False
 
-        if not walk and not rotating and not growing and stick.length != 0:
-            if stick.xEnd < base.x or stick.xEnd > base.x + base.width: 
+        if not walk and not rotating and not growing and not pushback and stick.length != 0:
+            if stick.xEnd < baselist[1].x or stick.xEnd > baselist[1].x + baselist[1].width: 
                 print("You Died!")
                 run = False
+            if stick.xEnd > baselist[1].redX and stick.xEnd < baselist[1].redX + 4: 
+                score += 1
+            pushback = True
 
-        # if pushback:
-        #     for base in baselist:
-        #         base.pushBack()
-        #     stick.pushBack()      
-        #     pushback = hero.pushBack()
+        if hero.x <= 60:
+            pushback = False
+
+        if pushback:
+            for base in baselist:
+                base.pushBack()
+            stick.pushBack()      
+            hero.pushBack()
 
         for base in baselist:
             if base.x + base.width < 0:
                 rem.append(base)
+                addbase = True
+                del stick            
+
+        if addbase: 
+            baselist.append(Base(base=baselist[-1]))
+            stick = Stick(hero)
+
+        for x in rem:
+            baselist.remove(x)
+            pushdist = 0
 
         
-        for x in rem:
-            del x
+        rem.clear()
 
         drawWindow(win, hero, walk, stick, baselist)
     pygame.quit()
