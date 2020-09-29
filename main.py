@@ -172,7 +172,7 @@ def main():
                 run = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    if(growing):
+                    if growing:
                         growing = False
                         rotating = True
                     else:
@@ -180,22 +180,31 @@ def main():
 
         if growing:
             stick.grow()
-        
+            
+
         if rotating:
             rotating = stick.rotate()  
 
         if stick.tilt >= math.pi:
             walk = True
 
-        if hero.x + 30 > base.x + base.width:
-            walk = False
-            pushback = True #shitty codition: always true as base is also pushed back
-            
-        if pushback:
-            for base in baselist:
-                base.pushBack()
-            stick.pushBack()      
-            pushback = hero.pushBack()
+        if stick.xEnd < base.x:
+            if hero.x + 30 >= stick.xEnd:
+                walk = False
+        else:
+            if hero.x + 30 >= max([stick.xEnd, base.x + base.width]):
+                walk = False
+
+        if not walk and not rotating and not growing and stick.length != 0:
+            if stick.xEnd < base.x or stick.xEnd > base.x + base.width: 
+                print("You Died!")
+                run = False
+
+        # if pushback:
+        #     for base in baselist:
+        #         base.pushBack()
+        #     stick.pushBack()      
+        #     pushback = hero.pushBack()
 
         for base in baselist:
             if base.x + base.width < 0:
