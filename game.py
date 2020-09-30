@@ -201,7 +201,7 @@ def main():
                 walk = False
 
         if not walk and not rotating and not growing and not pushback and stick.length != 0:
-            if stick.xEnd < baselist[1].x or stick.xEnd > baselist[1].x + baselist[1].width or stick.xEnd > 450: 
+            if stick.xEnd < baselist[1].x or stick.xEnd > baselist[1].x + baselist[1].width or hero.x > 450: 
                 print("You Died! Score:", score)
                 run = False
             if stick.xEnd > baselist[1].redX and stick.xEnd < baselist[1].redX + 4: 
