@@ -10,6 +10,10 @@ WIN_HEIGHT = 800
 HERO_X = 60
 HERO_Y = 470
 
+pygame.font.init()
+
+SCORE_FONT = pygame.font.SysFont("comicsans", 50)
+
 HERO_W = [  pygame.image.load(os.path.join("Images","walking","1.png")),
             pygame.image.load(os.path.join("Images","walking","2.png")),
             pygame.image.load(os.path.join("Images","walking","3.png")),
@@ -98,6 +102,7 @@ class Stick:
 
     def rotate(self):
         if self.tilt >= math.pi:
+            self.yEnd = 500
             return False
         self.tilt += math.pi / 540
         self.xEnd = self.x - self.length*(math.cos(self.tilt)) 
@@ -114,13 +119,6 @@ class Stick:
 
 class Base:
     def __init__(self, x_ = None, w_ = None, base = None):
-        # self.width = random.randint(60, 120)
-        # self.x = random.randint(HERO_X + 45, 320)
-        # self.redX = int(self.x + (self.width / 2))
-
-        # if (self.x + self.width) > 440:
-        #     self.x = 440 - self.width
-
         if x_ != None:
             self.x = x_
             self.width = w_
@@ -146,12 +144,15 @@ class Base:
 
 
 
-def drawWindow(win, hero, walk, stick, bases):
+def drawWindow(win, hero, walk, stick, bases, score):
     win.blit(BG_IMG, (0,0))
     hero.walk_draw(win) if walk else hero.stand_draw(win)
     stick.draw(win)
     for base in bases:
         base.draw(win)
+
+    text = SCORE_FONT.render("Score: " + str(score), 1, (255,255,255))
+    win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10))
     pygame.display.update()
 
 def main():
@@ -201,14 +202,14 @@ def main():
                 walk = False
 
         if not walk and not rotating and not growing and not pushback and stick.length != 0:
-            if stick.xEnd < baselist[1].x or stick.xEnd > baselist[1].x + baselist[1].width: 
-                print("You Died!")
+            if stick.xEnd < baselist[1].x or stick.xEnd > baselist[1].x + baselist[1].width or stick.xEnd > 450: 
+                print("You Died! Score:", score)
                 run = False
             if stick.xEnd > baselist[1].redX and stick.xEnd < baselist[1].redX + 4: 
                 score += 1
             pushback = True
 
-        if hero.x <= 60:
+        if hero.x <= 30:
             pushback = False
 
         if pushback:
@@ -224,6 +225,7 @@ def main():
                 del stick            
 
         if addbase: 
+            score += 1
             baselist.append(Base(base=baselist[-1]))
             stick = Stick(hero)
 
@@ -234,7 +236,7 @@ def main():
         
         rem.clear()
 
-        drawWindow(win, hero, walk, stick, baselist)
+        drawWindow(win, hero, walk, stick, baselist, score)
     pygame.quit()
     quit()
 
