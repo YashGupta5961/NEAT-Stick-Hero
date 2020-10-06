@@ -7,7 +7,7 @@ import neat
 
 WIN_WIDTH = 450
 WIN_HEIGHT = 800
-HERO_X = 60
+HERO_X = 65
 HERO_Y = 470
 
 pygame.font.init()
@@ -99,6 +99,8 @@ class Stick:
     def grow(self):
         self.length += 1
         self.yEnd = self.y - self.length
+        if self.yEnd < 0:
+            return True
 
     def rotate(self):
         if self.tilt >= math.pi:
@@ -144,102 +146,138 @@ class Base:
 
 
 
-def drawWindow(win, hero, walk, stick, bases, score):
+def drawWindow(win, hero, walk, stick, bases, score, idx):
+    score = "{:.2f}".format(score)
+
     win.blit(BG_IMG, (0,0))
     hero.walk_draw(win) if walk else hero.stand_draw(win)
     stick.draw(win)
     for base in bases:
         base.draw(win)
 
-    text = SCORE_FONT.render("Score: " + str(score), 1, (255,255,255))
-    win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10))
+    text1 = SCORE_FONT.render("ID: " + str(idx), 1, (255,255,255))
+    win.blit(text1, (WIN_WIDTH - 10 - text1.get_width(), 10))
+    
+    text2 = SCORE_FONT.render("Score: " + str(score), 1, (255,255,255))
+    win.blit(text2, (WIN_WIDTH - 10 - text2.get_width(), 60))
     pygame.display.update()
 
 def evaluate(genomes, config):
-    score = 0
-    hero = Hero(HERO_X, HERO_Y)
-    stick = Stick(hero)
-    baselist = list()
-    baselist.append(Base(0, 95))
-    baselist.append(Base(base=baselist[0]))
-    baselist.append(Base(base=baselist[1]))
-    rem = list()
-    add = list()
-    win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
-    run = True
-    walk = False
-    growing = False
-    rotating = False
-    pushback = False
+    for idx, g in genomes:
+        net = neat.nn.FeedForwardNetwork.create(g, config)
 
-    while(run):
-        addbase = False
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        score = 0
+        hero = Hero(HERO_X, HERO_Y)
+        stick = Stick(hero)
+        baselist = list()
+        baselist.append(Base(0, 95))
+        baselist.append(Base(base=baselist[0]))
+        baselist.append(Base(base=baselist[1]))
+        rem = list()
+        add = list()
+        win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
+        run = True
+        walk = False
+        growing = False
+        rotating = False
+        pushback = False
+        first = True
+
+        while(run):
+            addbase = False
+
+            if not rotating and stick.tilt <= math.pi and not walk and not pushback:
+                control = True
+            else:
+                control = False
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    run = False
+                    pygame.quit()
+                    quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        run = False
+
+            if control:
+                output = net.activate((hero.x, stick.length, baselist[1].x, baselist[1].x + baselist[1].width))
+                if output[0] > 0.5 and output[1] > 0.5:
+                    run = False
+                    break
+                if output[0] > 0.5 and growing:
+                    growing = False
+                    rotating = True
+                if output[1] > 0.5 and not growing:
+                    growing = True
+
+            if growing:
+                if(stick.grow()):
+                    score = -1000
+                    run = False
+                score += 0.01
+
+            if hero.x > 450:
+                score -= stick.length*0.01
                 run = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    if not rotating and stick.tilt <= math.pi:
-                        if growing:
-                            growing = False
-                            rotating = True
-                        else:
-                            growing = True
 
-        if growing:
-            stick.grow()
+            if rotating:
+                rotating = stick.rotate()  
 
-        if rotating:
-            rotating = stick.rotate()  
+            if stick.tilt >= math.pi:
+                walk = True
 
-        if stick.tilt >= math.pi:
-            walk = True
+            if stick.xEnd < baselist[1].x:
+                if hero.x + 30 >= stick.xEnd:
+                    walk = False
+            else:
+                if hero.x + 30 >= max([stick.xEnd, baselist[1].x + baselist[1].width]):
+                    walk = False
 
-        if stick.xEnd < baselist[1].x:
-            if hero.x + 30 >= stick.xEnd:
-                walk = False
-        else:
-            if hero.x + 30 >= max([stick.xEnd, baselist[1].x + baselist[1].width]):
-                walk = False
+            if not walk and not rotating and not growing and not pushback and stick.length != 0:
+                if stick.xEnd < baselist[1].x or stick.xEnd > baselist[1].x + baselist[1].width: 
+                  # print("You Died! Score:", score)
+                    score = -1000
+                    run = False
+                if stick.xEnd > baselist[1].redX and stick.xEnd < baselist[1].redX + 4: 
+                    score += 200
+                pushback = True
 
-        if not walk and not rotating and not growing and not pushback and stick.length != 0:
-            if stick.xEnd < baselist[1].x or stick.xEnd > baselist[1].x + baselist[1].width or hero.x > 450: 
-                print("You Died! Score:", score)
-                run = False
-            if stick.xEnd > baselist[1].redX and stick.xEnd < baselist[1].redX + 4: 
-                score += 1
-            pushback = True
+            if hero.x <= 30:
+                pushback = False
 
-        if hero.x <= 30:
-            pushback = False
+            if pushback:
+                for base in baselist:
+                    base.pushBack()
+                stick.pushBack()      
+                hero.pushBack()
 
-        if pushback:
             for base in baselist:
-                base.pushBack()
-            stick.pushBack()      
-            hero.pushBack()
+                if base.x + base.width < 0:
+                    rem.append(base)
+                    addbase = True
+                    del stick            
 
-        for base in baselist:
-            if base.x + base.width < 0:
-                rem.append(base)
-                addbase = True
-                del stick            
+            if addbase: 
+                score += 2000
+                baselist.append(Base(base=baselist[-1]))
+                stick = Stick(hero)
 
-        if addbase: 
-            score += 1
-            baselist.append(Base(base=baselist[-1]))
-            stick = Stick(hero)
+            for x in rem:
+                baselist.remove(x)
+                pushdist = 0
+            
+            rem.clear()
 
-        for x in rem:
-            baselist.remove(x)
-            pushdist = 0
+            if first and not growing:
+                score = -1000
+                run = False
 
-        
-        rem.clear()
+            first = False
 
-        drawWindow(win, hero, walk, stick, baselist, score)
-    pygame.quit()
-    quit()
+            drawWindow(win, hero, walk, stick, baselist, score, idx)
+            
+        g.fitness = score
 
 
 def run(configF):
@@ -253,7 +291,7 @@ def run(configF):
     p.add_reporter(stats)
     
     #Fix vvvv 
-    winner = p.run(evaluate(), 50) 
+    winner = p.run(evaluate, 50) 
 
     print('\nBest genome:\n{!s}'.format(winner))
 
