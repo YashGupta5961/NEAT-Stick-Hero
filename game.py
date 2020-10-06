@@ -6,7 +6,7 @@ import math
 
 WIN_WIDTH = 450
 WIN_HEIGHT = 800
-HERO_X = 60
+HERO_X = 65
 HERO_Y = 470
 
 pygame.font.init()
@@ -36,7 +36,7 @@ class Hero:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.image = HERO_W[0]
+        self.image = HERO_S[0]
         self.imgCount = 0
     ANIMATION_TIME = 20
     def stand_draw(self, win):
@@ -98,6 +98,8 @@ class Stick:
     def grow(self):
         self.length += 1
         self.yEnd = self.y - self.length
+        if self.yEnd < 0:
+            return True
 
     def rotate(self):
         if self.tilt >= math.pi:
@@ -170,22 +172,31 @@ def main():
     growing = False
     rotating = False
     pushback = False
+    control = True
     while(run):
         addbase = False
+        if not rotating and stick.tilt <= math.pi and not walk and not pushback:
+            control = True
+        else:
+            control = False
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    if not rotating and stick.tilt <= math.pi:
-                        if growing:
+            if control:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_c and growing:
                             growing = False
                             rotating = True
-                        else:
+                    if event.key == pygame.K_x and not growing:
                             growing = True
 
         if growing:
-            stick.grow()
+            if(stick.grow()):
+                run = False
+        
+        if hero.x > 450:
+            run = False
 
         if rotating:
             rotating = stick.rotate()  
@@ -201,7 +212,7 @@ def main():
                 walk = False
 
         if not walk and not rotating and not growing and not pushback and stick.length != 0:
-            if stick.xEnd < baselist[1].x or stick.xEnd > baselist[1].x + baselist[1].width or hero.x > 450: 
+            if stick.xEnd < baselist[1].x or stick.xEnd > baselist[1].x + baselist[1].width: 
                 print("You Died! Score:", score)
                 run = False
             if stick.xEnd > baselist[1].redX and stick.xEnd < baselist[1].redX + 4: 
