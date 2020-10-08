@@ -1,7 +1,7 @@
 # NEAT-Stick-Hero
 An AI that learns how to play Stick Hero! Using the NEAT python module.
 
-## Instructions
+## Files
 ### Images
 Sprites for game animation
 ### requirements.txt
