@@ -7,7 +7,7 @@ Sprites for game animation
 ### requirements.txt
 Use ```pip install -r requirements.txt``` to ensure all dependencies are installed.
 ### config.txt
-NEAT configuration files that is used to pass configurations when generating genomes
+NEAT configuration file that is used to pass configurations when generating genomes.
 ### game.py
 Original game file. Use 'x' to grow stick and 'c' to stop growing.
 ### learn.py
