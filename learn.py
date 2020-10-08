@@ -282,6 +282,8 @@ def evaluate(genomes, config):
             drawWindow(win, hero, walk, stick, baselist, score, idx)
             
         g.fitness = score
+        if score > 2000000:
+            break
 
 
 def run(configF):
