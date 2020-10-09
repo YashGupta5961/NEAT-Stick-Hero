@@ -1,5 +1,5 @@
   
-image: .gitpod.Dockerfile
+image: .gitpod.dockerfile
 
 tasks:
   - init: pip3 install -r requirements.txt
