@@ -1,8 +1,4 @@
 FROM gitpod/workspace-full-vnc
 
-USER root
-RUN apt-get update && apt-get install -y \
-        tk-dev \
-        python3-tk \
-        python-tk \
-    && apt-get clean && rm -rf /var/cache/apt/* && rm -rf /var/lib/apt/lists/* && rm -rf /tmp/*
+RUN sudo apt-get update && sudo apt-get install -y \
+    python-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev libsdl1.2-dev libsmpeg-dev python-numpy subversion libportmidi-dev ffmpeg libswscale-dev libavformat-dev libavcodec-dev
