@@ -279,7 +279,8 @@ def evaluate(genomes, config):
             first = False
 
             drawWindow(win, hero, walk, stick, baselist, score, idx)
-            if score > 1000000:
+            if score > 100000:
+                run = False
                 break
 
         g.fitness = score
