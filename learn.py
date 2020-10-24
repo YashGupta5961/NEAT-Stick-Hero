@@ -167,6 +167,8 @@ def evaluate(genomes, config):
     for idx, g in genomes:
         net = neat.nn.FeedForwardNetwork.create(g, config)
 
+        baseCount = 0
+        perfectCount = 0
         score = 0
         hero = Hero(HERO_X, HERO_Y)
         stick = Stick(hero)
@@ -194,7 +196,6 @@ def evaluate(genomes, config):
             
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    score -= 200
                     run = False
                     pygame.quit()
                     quit()
@@ -204,6 +205,7 @@ def evaluate(genomes, config):
 
             if control:
                 output = net.activate((hero.x, stick.length, baselist[1].x, baselist[1].x + baselist[1].width))
+                # output = net.activate((hero.x/WIN_WIDTH, stick.length/WIN_WIDTH, baselist[1].x/WIN_WIDTH, baselist[1].x/WIN_WIDTH + baselist[1].width/WIN_WIDTH))
                 if output[0] > 0.5 and output[1] > 0.5:
                     score -= 1000
                     run = False
@@ -211,11 +213,17 @@ def evaluate(genomes, config):
                 if output[0] > 0.5 and growing:
                     growing = False
                     rotating = True
+                    
                 if output[1] > 0.5 and not growing:
                     growing = True
+                
+                # print(hero.x/WIN_WIDTH, stick.length/WIN_WIDTH, baselist[1].x/WIN_WIDTH, baselist[1].x/WIN_WIDTH + baselist[1].width/WIN_WIDTH)
+                # print(output)
+                # print("__________")
 
             if growing:
                 if(stick.grow()):
+                    score -= stick.length*0.01
                     score = -1000
                     run = False
                 score += 0.01
@@ -238,12 +246,23 @@ def evaluate(genomes, config):
                     walk = False
 
             if not walk and not rotating and not growing and not pushback and stick.length != 0:
+                
+                center = baselist[1].redX + 2
+                dist = abs(stick.xEnd - center)
+
+
+
                 if stick.xEnd < baselist[1].x or stick.xEnd > baselist[1].x + baselist[1].width: 
                   # print("You Died! Score:", score)
                     score = -100
                     run = False
+                    break
+                else:
+                    score += 500 * float(1 - (2*dist)/ baselist[1].width)
+          
                 if stick.xEnd > baselist[1].redX and stick.xEnd < baselist[1].redX + 4: 
                     score += 200
+                    perfectCount += 1
                 pushback = True
 
             if hero.x <= 30:
@@ -261,7 +280,8 @@ def evaluate(genomes, config):
                     addbase = True
                     del stick            
 
-            if addbase: 
+            if addbase:
+                baseCount += 1 
                 score += 2000
                 baselist.append(Base(base=baselist[-1]))
                 stick = Stick(hero)
@@ -279,11 +299,15 @@ def evaluate(genomes, config):
             first = False
 
             drawWindow(win, hero, walk, stick, baselist, score, idx)
+            
             if score > 100000:
+                if baseCount == perfectCount:
+                    score = 150000 * baseCount
                 run = False
                 break
-
-        g.fitness = score
+            
+        div = 1 if (baseCount == 0) else baseCount
+        g.fitness = score / div
 
 
 def run(configF):
