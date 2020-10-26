@@ -224,7 +224,7 @@ def evaluate(genomes, config):
             if growing:
                 if(stick.grow()):
                     score -= stick.length*0.01
-                    score = -1000
+                    score -= 1000
                     run = False
                 score += 0.01
 
@@ -254,7 +254,7 @@ def evaluate(genomes, config):
 
                 if stick.xEnd < baselist[1].x or stick.xEnd > baselist[1].x + baselist[1].width: 
                   # print("You Died! Score:", score)
-                    score = -100
+                    score -= 100
                     run = False
                     break
                 else:
