@@ -8,7 +8,7 @@ import neat
 
 WIN_WIDTH = 450
 WIN_HEIGHT = 800
-HERO_X = 65
+HERO_X = 35
 HERO_Y = 470
 
 pygame.font.init()
@@ -173,7 +173,7 @@ def main():
     hero = Hero(HERO_X, HERO_Y)
     stick = Stick(hero)
     baselist = list()
-    baselist.append(Base(0, 95))
+    baselist.append(Base(0, 65))
     baselist.append(Base(base=baselist[0]))
     baselist.append(Base(base=baselist[1]))
     rem = list()
@@ -197,7 +197,7 @@ def main():
                 run = False
             
         if control:
-            output = net.activate((hero.x, stick.length, baselist[1].x, baselist[1].x + baselist[1].width))
+            output = net.activate((stick.x, stick.length, baselist[1].x, baselist[1].width))
             if output[0] > 0.5 and growing:
                 growing = False
                 rotating = True
@@ -232,7 +232,7 @@ def main():
                 score += 1
             pushback = True
 
-        if hero.x <= 30:
+        if hero.x < 30:
             pushback = False
 
         if pushback:

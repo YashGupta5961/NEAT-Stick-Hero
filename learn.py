@@ -8,7 +8,7 @@ import pickle
 
 WIN_WIDTH = 450
 WIN_HEIGHT = 800
-HERO_X = 65
+HERO_X = 35
 HERO_Y = 470
 
 pygame.font.init()
@@ -128,6 +128,8 @@ class Base:
 
         else:
             self.width = random.randint(60, 120)
+            if(self.width%2 == 1):
+                self.width -= 1
             end = random.randint(self.width + 5, 380)            
             self.x = base.x + base.width + end - self.width
         
@@ -173,7 +175,7 @@ def evaluate(genomes, config):
         hero = Hero(HERO_X, HERO_Y)
         stick = Stick(hero)
         baselist = list()
-        baselist.append(Base(0, 95))
+        baselist.append(Base(0, 65))
         baselist.append(Base(base=baselist[0]))
         baselist.append(Base(base=baselist[1]))
         rem = list()
@@ -204,7 +206,7 @@ def evaluate(genomes, config):
                         run = False
 
             if control:
-                output = net.activate((hero.x, stick.length, baselist[1].x, baselist[1].x + baselist[1].width))
+                output = net.activate((stick.x, stick.length, baselist[1].x, baselist[1].width))
                 # output = net.activate((hero.x/WIN_WIDTH, stick.length/WIN_WIDTH, baselist[1].x/WIN_WIDTH, baselist[1].x/WIN_WIDTH + baselist[1].width/WIN_WIDTH))
                 if output[0] > 0.5 and output[1] > 0.5:
                     score -= 1000
@@ -265,7 +267,7 @@ def evaluate(genomes, config):
                     perfectCount += 1
                 pushback = True
 
-            if hero.x <= 30:
+            if hero.x < 30:
                 pushback = False
 
             if pushback:

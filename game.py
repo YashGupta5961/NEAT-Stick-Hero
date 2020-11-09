@@ -126,6 +126,8 @@ class Base:
 
         else:
             self.width = random.randint(60, 120)
+            if(self.width%2 == 1):
+                self.width -= 1
             end = random.randint(self.width + 5, 380)            
             self.x = base.x + base.width + end - self.width
         
